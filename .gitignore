@@ -48,3 +48,6 @@ app-example
 # generated native folders
 /ios
 /android
+
+# allow firebase config for EAS
+!/android/app/google-services.json
