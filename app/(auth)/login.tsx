@@ -22,24 +22,21 @@ import { googleLogin } from "@/api/api";
 export default function Login() {
   const { login } = useContext(AuthContext);
 
-  // =====================
-  // EMAIL LOGIN STATE
-  // =====================
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   // =====================
-  // GOOGLE SIGNIN CONFIG
+  // GOOGLE CONFIG
   // =====================
   useEffect(() => {
     GoogleSignin.configure({
       webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      offlineAccess: true,
+      offlineAccess: false,
     });
   }, []);
 
   // =====================
-  // GOOGLE LOGIN (NATIVE POPUP)
+  // GOOGLE LOGIN (FIXED)
   // =====================
   const handleGoogleLogin = async () => {
     try {
@@ -47,14 +44,16 @@ export default function Login() {
 
       const userInfo = await GoogleSignin.signIn();
 
-      const user = userInfo.data?.user;
+      // ⭐ THIS IS THE FIX
+      const user = (userInfo as any).data?.user || (userInfo as any).user;
 
-      if (!user) {
-        Alert.alert("Google login failed");
+      console.log("GOOGLE USER:", user);
+
+      if (!user?.email) {
+        Alert.alert("Google login failed", "No email received");
         return;
       }
 
-      // Backend Google login
       const backendRes = await googleLogin({
         email: user.email,
         name: user.name || "",
@@ -68,12 +67,10 @@ export default function Login() {
 
       router.replace("/(tabs)/home");
     } catch (error: any) {
+      console.log("GOOGLE ERROR:", error);
+
       if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
       if (error.code === statusCodes.IN_PROGRESS) return;
-      if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert("Play services not available");
-        return;
-      }
 
       Alert.alert("Google login failed");
     }
@@ -129,7 +126,6 @@ export default function Login() {
           <Text style={styles.btnText}>Login</Text>
         </TouchableOpacity>
 
-        {/* GOOGLE BUTTON */}
         <TouchableOpacity
           style={styles.googleBtn}
           onPress={handleGoogleLogin}
@@ -143,9 +139,7 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push("/(auth)/forgot")}
-        >
+        <TouchableOpacity onPress={() => router.push("/(auth)/forgot")}>
           <Text style={styles.link}>Forgot Password?</Text>
         </TouchableOpacity>
 
@@ -153,9 +147,7 @@ export default function Login() {
           <Text style={{ textAlign: "center", marginTop: 12, color: "#777" }}>
             Don't have an account?
           </Text>
-          <TouchableOpacity
-            onPress={() => router.push("/(auth)/register")}
-          >
+          <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
             <Text style={styles.link}>Create Account</Text>
           </TouchableOpacity>
         </View>
