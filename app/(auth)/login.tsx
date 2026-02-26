@@ -30,7 +30,7 @@ export default function Login() {
   // =====================
   useEffect(() => {
     GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
       offlineAccess: false,
     });
   }, []);
