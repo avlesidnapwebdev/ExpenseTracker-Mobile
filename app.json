@@ -4,6 +4,7 @@
     "slug": "ExpensesTracker",
     "version": "1.0.0",
     "orientation": "portrait",
+
     "icon": "./assets/images/logo.png",
     "scheme": "expensestracker",
     "userInterfaceStyle": "automatic",
@@ -14,18 +15,16 @@
     },
 
     "android": {
+      "package": "com.avlesidnap.expensestracker",
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/logo.png",
         "backgroundImage": "./assets/images/logo.png",
         "monochromeImage": "./assets/images/logo.png"
-      },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.avlesidnap.expensestracker",
-
-      // 🔥 FIREBASE CONFIG (ADDED)
-      "googleServicesFile": "./android/app/google-services.json"
+      }
     },
 
     "web": {

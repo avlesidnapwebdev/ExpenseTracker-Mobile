@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   View,
   Text,
@@ -9,69 +9,72 @@ import {
   Alert,
 } from "react-native";
 
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
+import {
+  GoogleSignin,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
 
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import { AuthContext } from "@/context/AuthContext";
-
-import { auth } from "@/config/firebase";
-import {
-  GoogleAuthProvider,
-  signInWithCredential,
-} from "firebase/auth";
-
-WebBrowser.maybeCompleteAuthSession();
+import { googleLogin } from "@/api/api";
 
 export default function Login() {
   const { login } = useContext(AuthContext);
 
   // =====================
-  // EMAIL LOGIN STATE (UNCHANGED)
+  // EMAIL LOGIN STATE
   // =====================
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   // =====================
-  // FIREBASE GOOGLE LOGIN
+  // GOOGLE SIGNIN CONFIG
   // =====================
-  const [request, response, promptAsync] =
-    Google.useIdTokenAuthRequest({
-      clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-      androidClientId:
-        process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+      offlineAccess: true,
     });
+  }, []);
 
+  // =====================
+  // GOOGLE LOGIN (NATIVE POPUP)
+  // =====================
   const handleGoogleLogin = async () => {
     try {
-      const res = await promptAsync();
+      await GoogleSignin.hasPlayServices();
 
-      if (res.type !== "success") return;
+      const userInfo = await GoogleSignin.signIn();
 
-      const idToken = res.authentication?.idToken;
+      const user = userInfo.data?.user;
 
-      if (!idToken) {
+      if (!user) {
         Alert.alert("Google login failed");
         return;
       }
 
-      // Firebase login
-      const credential =
-        GoogleAuthProvider.credential(idToken);
+      // Backend Google login
+      const backendRes = await googleLogin({
+        email: user.email,
+        name: user.name || "",
+        picture: user.photo || "",
+      });
 
-      const userCred = await signInWithCredential(
-        auth,
-        credential
+      await SecureStore.setItemAsync(
+        "token",
+        backendRes.data.token
       );
 
-      // Save Firebase token (optional for backend use)
-      const token = await userCred.user.getIdToken();
-
-      await SecureStore.setItemAsync("token", token);
-
       router.replace("/(tabs)/home");
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+      if (error.code === statusCodes.IN_PROGRESS) return;
+      if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+        Alert.alert("Play services not available");
+        return;
+      }
+
       Alert.alert("Google login failed");
     }
   };
@@ -96,7 +99,6 @@ export default function Login() {
   // =====================
   return (
     <View style={styles.container}>
-      {/* LOGO */}
       <Image
         source={require("../../assets/images/logo.png")}
         style={styles.logo}
@@ -105,7 +107,6 @@ export default function Login() {
       <Text style={styles.title}>Welcome to</Text>
       <Text style={styles.title2}>Expenses Tracker</Text>
 
-      {/* EMAIL LOGIN */}
       <View style={styles.card}>
         <TextInput
           style={styles.input}
@@ -132,7 +133,6 @@ export default function Login() {
         <TouchableOpacity
           style={styles.googleBtn}
           onPress={handleGoogleLogin}
-          disabled={!request}
         >
           <Image
             source={require("../../assets/images/google.png")}
@@ -143,7 +143,6 @@ export default function Login() {
           </Text>
         </TouchableOpacity>
 
-        {/* LINKS */}
         <TouchableOpacity
           onPress={() => router.push("/(auth)/forgot")}
         >
