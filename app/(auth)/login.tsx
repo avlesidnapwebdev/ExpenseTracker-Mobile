@@ -28,53 +28,63 @@ export default function Login() {
   // =====================
   // GOOGLE CONFIG
   // =====================
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
-      offlineAccess: false,
-    });
-  }, []);
-
+ useEffect(() => {
+  GoogleSignin.configure({
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
+    offlineAccess: false,
+    forceCodeForRefreshToken: false,
+  });
+}, []);
   // =====================
   // GOOGLE LOGIN (FIXED)
   // =====================
   const handleGoogleLogin = async () => {
-    try {
-      await GoogleSignin.hasPlayServices();
+  try {
+    await GoogleSignin.hasPlayServices({
+      showPlayServicesUpdateDialog: true,
+    });
 
-      const userInfo = await GoogleSignin.signIn();
+    // clear previous session
+    await GoogleSignin.signOut();
 
-      // ⭐ THIS IS THE FIX
-      const user = (userInfo as any).data?.user || (userInfo as any).user;
+    const userInfo = await GoogleSignin.signIn();
 
-      console.log("GOOGLE USER:", user);
+    const user =
+      (userInfo as any).data?.user ||
+      (userInfo as any).user;
 
-      if (!user?.email) {
-        Alert.alert("Google login failed", "No email received");
-        return;
-      }
-
-      const backendRes = await googleLogin({
-        email: user.email,
-        name: user.name || "",
-        picture: user.photo || "",
-      });
-
-      await SecureStore.setItemAsync(
-        "token",
-        backendRes.data.token
-      );
-
-      router.replace("/(tabs)/home");
-    } catch (error: any) {
-      console.log("GOOGLE ERROR:", error);
-
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
-      if (error.code === statusCodes.IN_PROGRESS) return;
-
-      Alert.alert("Google login failed");
+    if (!user?.email) {
+      Alert.alert("Google login failed", "No email");
+      return;
     }
-  };
+
+    // send to backend
+    const backendRes = await googleLogin({
+      email: user.email,
+      name: user.name || "",
+      picture: user.photo || "",
+    });
+
+    await SecureStore.setItemAsync(
+      "token",
+      backendRes.data.token
+    );
+
+    router.replace("/(tabs)/home");
+
+  } catch (error: any) {
+    console.log("GOOGLE ERROR:", error);
+
+    if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
+    if (error.code === statusCodes.IN_PROGRESS) return;
+    if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+      Alert.alert("Play services not available");
+      return;
+    }
+
+    Alert.alert("Google login failed");
+  }
+};
 
   // =====================
   // EMAIL LOGIN (UNCHANGED)
