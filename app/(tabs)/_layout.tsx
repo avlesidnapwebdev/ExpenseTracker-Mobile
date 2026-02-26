@@ -15,11 +15,10 @@ export default function TabsLayout() {
         // TAB BAR STYLE
         tabBarStyle: {
           position: "absolute",
-          bottom: 12,
+          bottom: 14,
           left: 12,
           right: 12,
-          height: 65,
-          borderRadius: 20,
+          height: 100,
           backgroundColor: "#ffffff",
 
           // Shadow (iOS)
@@ -38,6 +37,7 @@ export default function TabsLayout() {
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
+
           marginBottom: Platform.OS === "ios" ? 0 : 6,
         },
 

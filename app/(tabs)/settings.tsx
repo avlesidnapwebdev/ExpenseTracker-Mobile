@@ -10,13 +10,12 @@ import {
     Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-
 import { AuthContext } from "../../context/AuthContext";
 import { updateProfile } from "../../api/api";
 import { currencies } from "../../utils/currencies";
 
 export default function Settings() {
-    const { user, setUser, logout } = useContext(AuthContext);
+    const { user, setUser, logout } = useContext(AuthContext)!;
     const router = useRouter();
 
     const [draftName, setDraftName] = useState("");
@@ -31,15 +30,19 @@ export default function Settings() {
 
     const handleUpdate = async () => {
         try {
-            const formData = new FormData();
-            formData.append("name", draftName);
-            formData.append("currency", draftCurrency);
+            const payload = {
+                name: draftName,
+                currency: draftCurrency,
+            };
 
-            const res = await updateProfile(formData);
-            setUser(res.data);
+            const res = await updateProfile(payload);
+
+            // depending backend response structure
+            setUser(res.data.user || res.data);
 
             Alert.alert("Success", "Profile updated successfully");
-        } catch (err) {
+        } catch (err: any) {
+            console.log("UPDATE ERROR:", err?.response?.data || err);
             Alert.alert("Error", "Profile update failed");
         }
     };
@@ -59,6 +62,8 @@ export default function Settings() {
     if (!user) return null;
 
     return (
+        <>
+        <View style={{ height: 50 }}></View>
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
             {/* PROFILE CARD */}
             <View style={styles.card}>
@@ -133,6 +138,7 @@ export default function Settings() {
                 <Text style={styles.logoutText}>Logout</Text>
             </TouchableOpacity>
         </ScrollView>
+        </>
     );
 }
 

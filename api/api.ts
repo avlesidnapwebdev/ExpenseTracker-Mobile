@@ -65,8 +65,10 @@ export const login = (data: LoginData) =>
 
 export const getProfile = () => API.get("/auth/me");
 
-export const updateProfile = (data: FormData | object) =>
-  API.put("/auth/profile", data);
+export const updateProfile = (data: {
+  name: string;
+  currency: string;
+}) => API.put("/auth/profile", data);
 
 export const resendVerify = (email: string) =>
   API.post("/auth/resend-verify", { email });

@@ -20,7 +20,7 @@ import { AuthContext } from "@/context/AuthContext";
 import { googleLogin } from "@/api/api";
 
 export default function Login() {
-  const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext)!;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -118,7 +118,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#777"
+          placeholderTextColor="#000"
           value={email}
           onChangeText={setEmail}
         />
@@ -126,7 +126,7 @@ export default function Login() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#777"
+          placeholderTextColor="#000"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -212,6 +212,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
+    color: "#000",
   },
 
   loginBtn: {

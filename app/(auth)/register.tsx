@@ -51,7 +51,7 @@ export default function Register() {
         <TextInput
           style={styles.input}
           placeholder="Full Name"
-          placeholderTextColor="#777"
+          placeholderTextColor="#000"
           value={name}
           onChangeText={setName}
         />
@@ -59,7 +59,7 @@ export default function Register() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor="#777"
+          placeholderTextColor="#000"
           value={email}
           onChangeText={setEmail}
         />
@@ -67,7 +67,7 @@ export default function Register() {
         <TextInput
           style={styles.input}
           placeholder="Password"
-          placeholderTextColor="#777"
+          placeholderTextColor="#000"
           secureTextEntry
           value={password}
           onChangeText={setPassword}
@@ -125,6 +125,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
+    color: "#000",
   },
 
   signupBtn: {
