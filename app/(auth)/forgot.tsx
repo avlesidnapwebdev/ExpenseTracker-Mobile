@@ -6,7 +6,13 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from "react-native";
+
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { sendOtp, resetPassword } from "@/api/api";
 
@@ -20,6 +26,10 @@ export default function ForgotScreen() {
 
   const [loading, setLoading] = useState(false);
 
+  // 👇 NEW STATES (show / hide)
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
   // ======================
   // SEND OTP
   // ======================
@@ -31,7 +41,7 @@ export default function ForgotScreen() {
       await sendOtp(email);
       setOtpSent(true);
       Alert.alert("Success", "OTP sent to your email");
-    } catch (err: any) {
+    } catch {
       Alert.alert("Error", "Failed to send OTP");
     } finally {
       setLoading(false);
@@ -77,77 +87,107 @@ export default function ForgotScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Forgot Password</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Forgot Password</Text>
 
-      {/* EMAIL */}
-      <TextInput
-        style={styles.input}
-        placeholder="Enter Email"
-        value={email}
-        onChangeText={setEmail}
-        editable={!otpSent}
-        placeholderTextColor="#000"
-      />
-
-      {/* SEND OTP BUTTON */}
-      {!otpSent && (
-        <TouchableOpacity style={styles.button} onPress={handleSendOtp}>
-          <Text style={styles.buttonText} >
-            {loading ? "Sending..." : "Send OTP"}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {/* OTP + RESET SECTION */}
-      {otpSent && (
-        <>
+          {/* EMAIL */}
           <TextInput
             style={styles.input}
-            placeholder="Enter OTP"
-            value={otp}
-            onChangeText={setOtp}
-            keyboardType="number-pad"
+            placeholder="Enter Email"
+            value={email}
+            onChangeText={setEmail}
+            editable={!otpSent}
             placeholderTextColor="#000"
           />
 
-          <TextInput
-            style={styles.input}
-            placeholder="New Password"
-            secureTextEntry
-            value={newPass}
-            onChangeText={setNewPass}
-            placeholderTextColor="#000"
-          />
+          {!otpSent && (
+            <TouchableOpacity style={styles.button} onPress={handleSendOtp}>
+              <Text style={styles.buttonText}>
+                {loading ? "Sending..." : "Send OTP"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            secureTextEntry
-            value={confirmPass}
-            onChangeText={setConfirmPass}
-            placeholderTextColor="#000"
-          />
+          {otpSent && (
+            <>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter OTP"
+                value={otp}
+                onChangeText={setOtp}
+                keyboardType="number-pad"
+                placeholderTextColor="#000"
+              />
+
+              {/* NEW PASSWORD */}
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="New Password"
+                  secureTextEntry={!showNewPass}
+                  value={newPass}
+                  onChangeText={setNewPass}
+                  placeholderTextColor="#000"
+                />
+                <TouchableOpacity
+                  onPress={() => setShowNewPass(!showNewPass)}
+                >
+                  <Ionicons
+                    name={showNewPass ? "eye-off" : "eye"}
+                    size={22}
+                    color="#6d28d9"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* CONFIRM PASSWORD */}
+              <View style={styles.passwordContainer}>
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Confirm Password"
+                  secureTextEntry={!showConfirmPass}
+                  value={confirmPass}
+                  onChangeText={setConfirmPass}
+                  placeholderTextColor="#000"
+                />
+                <TouchableOpacity
+                  onPress={() =>
+                    setShowConfirmPass(!showConfirmPass)
+                  }
+                >
+                  <Ionicons
+                    name={showConfirmPass ? "eye-off" : "eye"}
+                    size={22}
+                    color="#6d28d9"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.button}
+                onPress={handleResetPassword}
+              >
+                <Text style={styles.buttonText}>
+                  {loading ? "Resetting..." : "Reset Password"}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           <TouchableOpacity
-            style={styles.button}
-            onPress={handleResetPassword}
+            style={styles.backBtn}
+            onPress={() => router.replace("/(auth)/login")}
           >
-            <Text style={styles.buttonText}>
-              {loading ? "Resetting..." : "Reset Password"}
-            </Text>
+            <Text style={styles.backText}>← Back to Login</Text>
           </TouchableOpacity>
-        </>
-      )}
-
-      {/* BACK LOGIN */}
-      <TouchableOpacity
-        style={styles.backBtn}
-        onPress={() => router.replace("/(auth)/login")}
-      >
-        <Text style={styles.backText}>← Back to Login</Text>
-      </TouchableOpacity>
-    </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -173,7 +213,25 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 15,
     color: "#000",
-  
+    backgroundColor: "#fff",
+  },
+
+  // 👇 PASSWORD FIELD STYLE
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 15,
+    backgroundColor: "#fff",
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 12,
+    color: "#000",
   },
 
   button: {

@@ -43,6 +43,7 @@ export default function AppHeader() {
 const styles = StyleSheet.create({
   header: {
     height: 68,
+    width: "100%",
     backgroundColor: "#fff",
     flexDirection: "row",
     justifyContent: "space-between",

@@ -7,8 +7,13 @@ import {
   StyleSheet,
   Image,
   Alert,
+  KeyboardAvoidingView,
+  TouchableWithoutFeedback,
+  Keyboard,
+  Platform,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
 import API from "../../api/api";
 import { router } from "expo-router";
 
@@ -16,6 +21,9 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // 👇 show / hide password
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async () => {
     try {
@@ -37,51 +45,73 @@ export default function Register() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          {/* LOGO */}
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={styles.logo}
+          />
 
-      {/* LOGO */}
-      <Image
-        source={require("../../assets/images/logo.png")}
-        style={styles.logo}
-      />
+          <Text style={styles.title}>Create Account</Text>
 
-      <Text style={styles.title}>Create Account</Text>
+          <View style={styles.card}>
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name"
+              placeholderTextColor="#000"
+              value={name}
+              onChangeText={setName}
+            />
 
-      <View style={styles.card}>
-        <TextInput
-          style={styles.input}
-          placeholder="Full Name"
-          placeholderTextColor="#000"
-          value={name}
-          onChangeText={setName}
-        />
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              placeholderTextColor="#000"
+              value={email}
+              onChangeText={setEmail}
+            />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          placeholderTextColor="#000"
-          value={email}
-          onChangeText={setEmail}
-        />
+            {/* PASSWORD WITH EYE ICON */}
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                placeholderTextColor="#000"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#000"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={22}
+                  color="#6d28d9"
+                />
+              </TouchableOpacity>
+            </View>
 
-        <TouchableOpacity style={styles.signupBtn} onPress={handleRegister}>
-          <Text style={styles.btnText}>Sign Up</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.signupBtn}
+              onPress={handleRegister}
+            >
+              <Text style={styles.btnText}>Sign Up</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.link}>Back to Login</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={styles.link}>Back to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -125,6 +155,24 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginBottom: 12,
+    color: "#000",
+  },
+
+  // 👇 PASSWORD STYLE
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+  },
+
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 12,
     color: "#000",
   },
 
