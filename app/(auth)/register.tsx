@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
   Platform,
+  Animated,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -21,9 +21,32 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // 👇 show / hide password
   const [showPassword, setShowPassword] = useState(false);
+
+  /* ---------- BEAUTIFUL POPUP ---------- */
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupColor, setPopupColor] = useState("#16a34a");
+  const popupAnim = useRef(new Animated.Value(0)).current;
+
+  const showPopup = (msg: string, color: string) => {
+    setPopupMsg(msg);
+    setPopupColor(color);
+
+    Animated.sequence([
+      Animated.timing(popupAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(popupAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  /* ------------------------------------ */
 
   const handleRegister = async () => {
     try {
@@ -34,12 +57,16 @@ export default function Register() {
         platform: "mobile",
       });
 
-      Alert.alert("Success", "Verify your email before login");
-      router.back();
+      showPopup("Verify your email before login", "#16a34a");
+
+      setTimeout(() => {
+        router.back();
+      }, 700);
+
     } catch (err: any) {
-      Alert.alert(
-        "Register Failed",
-        err?.response?.data?.message || "Something went wrong"
+      showPopup(
+        err?.response?.data?.message || "Something went wrong",
+        "#dc2626"
       );
     }
   };
@@ -49,6 +76,28 @@ export default function Register() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {/* POPUP */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.popup,
+          {
+            backgroundColor: popupColor,
+            opacity: popupAnim,
+            transform: [
+              {
+                scale: popupAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.popupText}>{popupMsg}</Text>
+      </Animated.View>
+
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           {/* LOGO */}
@@ -76,7 +125,7 @@ export default function Register() {
               onChangeText={setEmail}
             />
 
-            {/* PASSWORD WITH EYE ICON */}
+            {/* PASSWORD */}
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -115,15 +164,31 @@ export default function Register() {
   );
 }
 
-// =====================
-// STYLES
-// =====================
+/* ===================== */
+/* STYLES */
+/* ===================== */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
     justifyContent: "center",
     padding: 20,
+  },
+
+  popup: {
+    position: "absolute",
+    top: 60,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    zIndex: 9999,
+    elevation: 50,
+  },
+
+  popupText: {
+    color: "#fff",
+    fontWeight: "700",
   },
 
   logo: {
@@ -158,7 +223,6 @@ const styles = StyleSheet.create({
     color: "#000",
   },
 
-  // 👇 PASSWORD STYLE
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",

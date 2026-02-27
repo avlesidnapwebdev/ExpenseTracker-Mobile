@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Animated,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -30,9 +30,32 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // NEW → password show/hide state
   const [showPassword, setShowPassword] = useState(false);
+
+  /* ---------- BEAUTIFUL POPUP ---------- */
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupColor, setPopupColor] = useState("#16a34a");
+  const popupAnim = useRef(new Animated.Value(0)).current;
+
+  const showPopup = (msg: string, color: string) => {
+    setPopupMsg(msg);
+    setPopupColor(color);
+
+    Animated.sequence([
+      Animated.timing(popupAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(popupAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  /* ------------------------------------ */
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -49,7 +72,6 @@ export default function Login() {
       });
 
       await GoogleSignin.signOut();
-
       const userInfo = await GoogleSignin.signIn();
 
       const user =
@@ -57,7 +79,7 @@ export default function Login() {
         (userInfo as any).user;
 
       if (!user?.email) {
-        Alert.alert("Google login failed", "No email");
+        showPopup("Google login failed", "#dc2626");
         return;
       }
 
@@ -72,30 +94,36 @@ export default function Login() {
         backendRes.data.token
       );
 
-      router.replace("/(tabs)/home");
+      showPopup("Login successful", "#16a34a");
+
+      setTimeout(() => {
+        router.replace("/(tabs)/home");
+      }, 700);
 
     } catch (error: any) {
       console.log("GOOGLE ERROR:", error);
 
       if (error.code === statusCodes.SIGN_IN_CANCELLED) return;
       if (error.code === statusCodes.IN_PROGRESS) return;
-      if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        Alert.alert("Play services not available");
-        return;
-      }
 
-      Alert.alert("Google login failed");
+      showPopup("Google login failed", "#dc2626");
     }
   };
 
   const handleLogin = async () => {
     try {
       await login(email, password);
-      router.replace("/(tabs)/home");
+
+      showPopup("Login successful", "#16a34a");
+
+      setTimeout(() => {
+        router.replace("/(tabs)/home");
+      }, 700);
+
     } catch (err: any) {
-      Alert.alert(
-        "Login Failed",
-        err?.response?.data?.message || "Invalid credentials"
+      showPopup(
+        err?.response?.data?.message || "Invalid credentials",
+        "#dc2626"
       );
     }
   };
@@ -105,6 +133,28 @@ export default function Login() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {/* POPUP */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.popup,
+          {
+            backgroundColor: popupColor,
+            opacity: popupAnim,
+            transform: [
+              {
+                scale: popupAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.popupText}>{popupMsg}</Text>
+      </Animated.View>
+
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <Image
@@ -124,7 +174,6 @@ export default function Login() {
               onChangeText={setEmail}
             />
 
-            {/* PASSWORD INPUT WITH ICON */}
             <View style={styles.passwordContainer}>
               <TextInput
                 style={styles.passwordInput}
@@ -183,40 +232,27 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    padding: 20,
-  },
+  container: { flex: 1, backgroundColor: "#fff", justifyContent: "center", padding: 20 },
 
-  logo: {
-    width: 150,
-    height: 150,
+  popup: {
+    position: "absolute",
+    top: 60,
     alignSelf: "center",
-    marginBottom: 10,
-    resizeMode: "contain",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    zIndex: 9999,
+    elevation: 50,
   },
 
-  title: {
-    fontSize: 26,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
+  popupText: { color: "#fff", fontWeight: "700" },
 
-  title2: {
-    fontSize: 26,
-    textAlign: "center",
-    fontWeight: "bold",
-    color: "#6d28d9",
-    marginBottom: 25,
-  },
+  logo: { width: 150, height: 150, alignSelf: "center", marginBottom: 10, resizeMode: "contain" },
 
-  card: {
-    backgroundColor: "#f9fafb",
-    padding: 20,
-    borderRadius: 14,
-  },
+  title: { fontSize: 26, textAlign: "center", fontWeight: "bold" },
+  title2: { fontSize: 26, textAlign: "center", fontWeight: "bold", color: "#6d28d9", marginBottom: 25 },
+
+  card: { backgroundColor: "#f9fafb", padding: 20, borderRadius: 14 },
 
   input: {
     backgroundColor: "#fff",
@@ -228,7 +264,6 @@ const styles = StyleSheet.create({
     color: "#000",
   },
 
-  // NEW PASSWORD STYLE
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -240,24 +275,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
 
-  passwordInput: {
-    flex: 1,
-    paddingVertical: 12,
-    color: "#000",
-  },
+  passwordInput: { flex: 1, paddingVertical: 12, color: "#000" },
 
-  loginBtn: {
-    backgroundColor: "#6d28d9",
-    padding: 14,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  loginBtn: { backgroundColor: "#6d28d9", padding: 14, borderRadius: 10, alignItems: "center", marginBottom: 12 },
+  btnText: { color: "#fff", fontWeight: "bold" },
 
   googleBtn: {
     flexDirection: "row",
@@ -270,10 +291,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  link: {
-    textAlign: "center",
-    marginTop: 12,
-    color: "#6d28d9",
-    fontWeight: "600",
-  },
+  link: { textAlign: "center", marginTop: 12, color: "#6d28d9", fontWeight: "600" },
 });

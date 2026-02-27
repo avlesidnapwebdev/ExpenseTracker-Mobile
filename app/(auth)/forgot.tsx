@@ -1,15 +1,15 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
   Platform,
+  Animated,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -26,23 +26,50 @@ export default function ForgotScreen() {
 
   const [loading, setLoading] = useState(false);
 
-  // 👇 NEW STATES (show / hide)
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
+
+  /* ---------- BEAUTIFUL POPUP ---------- */
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupColor, setPopupColor] = useState("#16a34a");
+  const popupAnim = useRef(new Animated.Value(0)).current;
+
+  const showPopup = (msg: string, color: string) => {
+    setPopupMsg(msg);
+    setPopupColor(color);
+
+    Animated.sequence([
+      Animated.timing(popupAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(popupAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  /* ------------------------------------ */
 
   // ======================
   // SEND OTP
   // ======================
   const handleSendOtp = async () => {
-    if (!email) return Alert.alert("Enter email");
+    if (!email) {
+      showPopup("Enter email", "#dc2626");
+      return;
+    }
 
     try {
       setLoading(true);
       await sendOtp(email);
       setOtpSent(true);
-      Alert.alert("Success", "OTP sent to your email");
+      showPopup("OTP sent to your email", "#16a34a");
     } catch {
-      Alert.alert("Error", "Failed to send OTP");
+      showPopup("Failed to send OTP", "#dc2626");
     } finally {
       setLoading(false);
     }
@@ -53,11 +80,13 @@ export default function ForgotScreen() {
   // ======================
   const handleResetPassword = async () => {
     if (!otp || !newPass || !confirmPass) {
-      return Alert.alert("Fill all fields");
+      showPopup("Fill all fields", "#dc2626");
+      return;
     }
 
     if (newPass !== confirmPass) {
-      return Alert.alert("Passwords do not match");
+      showPopup("Passwords do not match", "#dc2626");
+      return;
     }
 
     try {
@@ -70,16 +99,16 @@ export default function ForgotScreen() {
         confirmPassword: confirmPass,
       });
 
-      Alert.alert("Success", "Password reset successful", [
-        {
-          text: "Go Login",
-          onPress: () => router.replace("/(auth)/login"),
-        },
-      ]);
+      showPopup("Password reset successful", "#16a34a");
+
+      setTimeout(() => {
+        router.replace("/(auth)/login");
+      }, 700);
+
     } catch (err: any) {
-      Alert.alert(
-        "Error",
-        err?.response?.data?.message || "Reset failed"
+      showPopup(
+        err?.response?.data?.message || "Reset failed",
+        "#dc2626"
       );
     } finally {
       setLoading(false);
@@ -91,6 +120,28 @@ export default function ForgotScreen() {
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      {/* POPUP */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.popup,
+          {
+            backgroundColor: popupColor,
+            opacity: popupAnim,
+            transform: [
+              {
+                scale: popupAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.popupText}>{popupMsg}</Text>
+      </Animated.View>
+
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <Text style={styles.title}>Forgot Password</Text>
@@ -199,6 +250,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
+  popup: {
+    position: "absolute",
+    top: 60,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    zIndex: 9999,
+    elevation: 50,
+  },
+
+  popupText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+
   title: {
     fontSize: 28,
     fontWeight: "bold",
@@ -216,7 +283,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 
-  // 👇 PASSWORD FIELD STYLE
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
