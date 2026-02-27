@@ -47,7 +47,6 @@ export default function Home() {
   const tabBarHeight = useBottomTabBarHeight();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [refreshing, setRefreshing] = useState(false);
-
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -122,6 +121,11 @@ export default function Home() {
     </View>
   );
 
+
+
+
+
+
   return (
     <ScreenContainer>
       <Header />
@@ -134,6 +138,8 @@ export default function Home() {
         <Summary label="Expense" value={summary.totalExpenses} color="#dc2626" currency={currency} />
         <Summary label="Balance" value={summary.balance} color="#7C3AED" currency={currency} />
 
+
+        <View style={{ height: 8 }} />
         {/* TITLE */}
         <View style={[styles.titleRow, { marginTop: 18, display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}>
           <Text style={styles.title}>Recent Transactions</Text>
