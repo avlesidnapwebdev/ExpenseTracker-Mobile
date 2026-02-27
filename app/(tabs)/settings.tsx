@@ -28,7 +28,6 @@ export default function Settings() {
   const [draftName, setDraftName] = useState("");
   const [draftCurrency, setDraftCurrency] = useState("USD");
 
-  /* ---------- BEAUTIFUL POPUP ---------- */
   const [popupMsg, setPopupMsg] = useState("");
   const [popupColor, setPopupColor] = useState("#16a34a");
   const popupAnim = useRef(new Animated.Value(0)).current;
@@ -51,7 +50,6 @@ export default function Settings() {
       }),
     ]).start();
   };
-  /* ------------------------------------ */
 
   useEffect(() => {
     if (user) {
@@ -68,7 +66,6 @@ export default function Settings() {
       };
 
       const res = await updateProfile(payload);
-
       setUser(res.data.user || res.data);
 
       showPopup("Profile updated successfully", "#16a34a");
@@ -95,7 +92,7 @@ export default function Settings() {
     <>
       <StatusBar barStyle="dark-content" />
 
-      {/* POPUP MESSAGE */}
+      {/* POPUP */}
       <Animated.View
         pointerEvents="none"
         style={[
@@ -117,14 +114,14 @@ export default function Settings() {
         <Text style={styles.popupText}>{popupMsg}</Text>
       </Animated.View>
 
-      {/* TOP SAFE SPACE */}
       <View style={{ height: insets.top }} />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{
-          paddingBottom: tabBarHeight + insets.bottom + 20,
-        }}
+      {/* ❌ REMOVED PAGE SCROLL */}
+      <View
+        style={[
+          styles.container,
+          { paddingBottom: tabBarHeight + insets.bottom + 20 },
+        ]}
       >
         {/* PROFILE CARD */}
         <View style={styles.card}>
@@ -137,7 +134,6 @@ export default function Settings() {
               }
               style={styles.avatar}
             />
-
             <View>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.email}>{user.email}</Text>
@@ -156,7 +152,7 @@ export default function Settings() {
           />
         </View>
 
-        {/* CURRENCY */}
+        {/* CURRENCY (ONLY THIS SCROLLS) */}
         <View style={styles.card}>
           <Text style={styles.label}>Currency</Text>
 
@@ -183,7 +179,7 @@ export default function Settings() {
           </ScrollView>
         </View>
 
-        {/* ACTION BUTTONS */}
+        {/* BUTTONS */}
         <View style={styles.row}>
           <TouchableOpacity style={styles.updateBtn} onPress={handleUpdate}>
             <Text style={styles.btnText}>Update</Text>
@@ -198,7 +194,7 @@ export default function Settings() {
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </>
   );
 }
