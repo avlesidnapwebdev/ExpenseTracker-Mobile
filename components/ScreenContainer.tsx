@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ScreenContainer({
@@ -8,7 +8,11 @@ export default function ScreenContainer({
   children: React.ReactNode;
 }) {
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView
+      style={styles.safe}
+      edges={["top", "left", "right", "bottom"]}
+    >
+      <StatusBar barStyle="dark-content" />
       <View style={styles.container}>{children}</View>
     </SafeAreaView>
   );

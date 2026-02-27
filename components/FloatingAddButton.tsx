@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -7,95 +7,201 @@ import {
   Text,
   TextInput,
   Pressable,
+  Animated,
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 import { addExpense, addIncome } from "../api/api";
 
 type Props = {
-  onAdded?: () => void; // reload callback
+  onAdded?: () => void;
+  defaultType?: "income" | "expense";
+  pageType?: "home" | "income" | "expense";
 };
 
-export default function FloatingAddButton({ onAdded }: Props) {
-  const today = new Date().toISOString().split("T")[0];
+export default function FloatingAddButton({
+  onAdded,
+  defaultType = "income",
+  pageType = "home",
+}: Props) {
+
+  const formatDate = (date: Date) =>
+    date.toISOString().split("T")[0];
 
   const [open, setOpen] = useState(false);
+  const [showDate, setShowDate] = useState(false);
 
   const [form, setForm] = useState({
-    type: "income",
+    type: defaultType,
     name: "",
     amount: "",
-    date: today,
+    date: new Date(),
   });
 
+  /* ---------- POPUP ---------- */
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupColor, setPopupColor] = useState("#16a34a");
+  const popupAnim = useRef(new Animated.Value(0)).current;
+
+  const showPopup = (msg: string, color: string) => {
+    setPopupMsg(msg);
+    setPopupColor(color);
+
+    Animated.sequence([
+      Animated.timing(popupAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(popupAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  /* -------------------------------- */
+
+  const closeModal = () => {
+    setOpen(false);
+    setForm({
+      type: defaultType,
+      name: "",
+      amount: "",
+      date: new Date(),
+    });
+  };
+
   const handleAdd = async () => {
-    if (!form.name || !form.amount) return;
+    if (!form.name || !form.amount) {
+      showPopup("Fill all fields", "#dc2626");
+      return;
+    }
 
     try {
+      const formattedDate = formatDate(form.date);
+
       if (form.type === "income") {
         await addIncome({
           source: form.name,
           amount: form.amount,
-          date: form.date,
+          date: formattedDate,
         });
       } else {
         await addExpense({
           category: form.name,
           amount: form.amount,
-          date: form.date,
+          date: formattedDate,
         });
       }
 
       setOpen(false);
+
+      showPopup(
+        `${form.type} added successfully`,
+        form.type === "income" ? "#16a34a" : "#dc2626"
+      );
+
       setForm({
-        type: "income",
+        type: defaultType,
         name: "",
         amount: "",
-        date: today,
+        date: new Date(),
       });
 
-      onAdded?.(); // refresh page
-    } catch (e) {
-      console.log("Add failed", e);
+      onAdded?.();
+    } catch {
+      showPopup("Add failed", "#dc2626");
     }
   };
 
+  /* FAB COLOR BASED ON PAGE */
+  const themeColor =
+    pageType === "income"
+      ? "#16a34a"
+      : pageType === "expense"
+        ? "#dc2626"
+        : "#7C3AED";
+
+  const namePlaceholder =
+    form.type === "income"
+      ? "Income Source"
+      : "Expense Name";
+
   return (
     <>
-      {/* FLOAT ICON */}
-      <TouchableOpacity style={styles.fab} onPress={() => setOpen(true)}>
+      {/* FAB */}
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: themeColor }]}
+        onPress={() => {
+          setForm({
+            type: defaultType,
+            name: "",
+            amount: "",
+            date: new Date(),
+          });
+          setOpen(true);
+        }}
+      >
         <Feather name="plus" size={26} color="#fff" />
       </TouchableOpacity>
 
       {/* MODAL */}
       <Modal visible={open} transparent animationType="fade">
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
-          <Pressable style={styles.modalCard} onPress={() => {}}>
-            
-            {/* CLOSE */}
-            <TouchableOpacity
-              style={styles.close}
-              onPress={() => setOpen(false)}
-            >
+
+        {/* POPUP FRONT */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.popup,
+            {
+              backgroundColor: popupColor,
+              opacity: popupAnim,
+              transform: [
+                {
+                  scale: popupAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.popupText}>{popupMsg}</Text>
+        </Animated.View>
+
+        <Pressable style={styles.overlay} onPress={closeModal}>
+          <Pressable style={styles.modalCard} onPress={() => { }}>
+
+            <TouchableOpacity style={styles.close} onPress={closeModal}>
               <Feather name="x" size={22} />
             </TouchableOpacity>
 
             <Text style={styles.title}>Add Transaction</Text>
 
-            {/* TYPE */}
+            {/* TYPE SWITCH */}
             <View style={styles.row}>
               {["income", "expense"].map((t) => (
                 <TouchableOpacity
                   key={t}
                   style={[
                     styles.typeBtn,
-                    form.type === t && styles.typeActive,
+                    form.type === t && {
+                      backgroundColor:
+                        t === "income" ? "#16a34a" : "#dc2626",
+                    },
                   ]}
-                  onPress={() => setForm({ ...form, type: t })}
+                  onPress={() =>
+                    setForm({ ...form, type: t as any })
+                  }
                 >
                   <Text
                     style={{
                       color: form.type === t ? "#fff" : "#000",
+                      fontWeight: "600",
                     }}
                   >
                     {t}
@@ -104,36 +210,58 @@ export default function FloatingAddButton({ onAdded }: Props) {
               ))}
             </View>
 
-            {/* NAME */}
             <TextInput
-              placeholder="Name"
+              placeholder={namePlaceholder}
+              placeholderTextColor="#000"
               style={styles.input}
               value={form.name}
-              onChangeText={(v) => setForm({ ...form, name: v })}
+              onChangeText={(v) =>
+                setForm({ ...form, name: v })
+              }
             />
 
-            {/* AMOUNT */}
             <TextInput
               placeholder="Amount"
+              placeholderTextColor="#000"
               keyboardType="numeric"
               style={styles.input}
               value={form.amount}
-              onChangeText={(v) => setForm({ ...form, amount: v })}
+              onChangeText={(v) =>
+                setForm({ ...form, amount: v })
+              }
             />
 
-            {/* DATE */}
-            <TextInput
-              placeholder="YYYY-MM-DD"
+            <TouchableOpacity
               style={styles.input}
-              value={form.date}
-              onChangeText={(v) => setForm({ ...form, date: v })}
-            />
+              onPress={() => setShowDate(true)}
+            >
+              <Text>{formatDate(form.date)}</Text>
+            </TouchableOpacity>
 
-            <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
+            {showDate && (
+              <DateTimePicker
+                value={form.date}
+                mode="date"
+                maximumDate={new Date()}
+                display="default"
+                onChange={(_, selected) => {
+                  setShowDate(false);
+                  if (selected) {
+                    setForm({ ...form, date: selected });
+                  }
+                }}
+              />
+            )}
+
+            <TouchableOpacity
+              style={[styles.addBtn, { backgroundColor: themeColor }]}
+              onPress={handleAdd}
+            >
               <Text style={{ color: "#fff", fontWeight: "700" }}>
-                Add Transaction
+                Add {form.type}
               </Text>
             </TouchableOpacity>
+
           </Pressable>
         </Pressable>
       </Modal>
@@ -144,15 +272,30 @@ export default function FloatingAddButton({ onAdded }: Props) {
 const styles = StyleSheet.create({
   fab: {
     position: "absolute",
-    bottom: -20,
+    bottom: 0,
     right: 20,
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: "#7C3AED",
     justifyContent: "center",
     alignItems: "center",
     elevation: 8,
+  },
+
+  popup: {
+    position: "absolute",
+    top: 70,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    zIndex: 9999,
+    elevation: 50,
+  },
+
+  popupText: {
+    color: "#fff",
+    fontWeight: "700",
   },
 
   overlay: {
@@ -167,14 +310,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 18,
-    marginBottom: 180,
+    marginBottom: 200,
   },
 
   close: {
     position: "absolute",
     right: 12,
     top: 12,
-    zIndex: 10,
   },
 
   title: {
@@ -196,20 +338,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  typeActive: {
-    backgroundColor: "#7C3AED",
-  },
-
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 10,
-    padding: 10,
+    padding: 12,
     marginTop: 10,
   },
 
   addBtn: {
-    backgroundColor: "#7C3AED",
     padding: 12,
     borderRadius: 10,
     alignItems: "center",

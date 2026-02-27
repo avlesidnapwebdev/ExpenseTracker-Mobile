@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Alert,
   StatusBar,
+  Animated,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -28,6 +28,31 @@ export default function Settings() {
   const [draftName, setDraftName] = useState("");
   const [draftCurrency, setDraftCurrency] = useState("USD");
 
+  /* ---------- BEAUTIFUL POPUP ---------- */
+  const [popupMsg, setPopupMsg] = useState("");
+  const [popupColor, setPopupColor] = useState("#16a34a");
+  const popupAnim = useRef(new Animated.Value(0)).current;
+
+  const showPopup = (msg: string, color: string) => {
+    setPopupMsg(msg);
+    setPopupColor(color);
+
+    Animated.sequence([
+      Animated.timing(popupAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.delay(1800),
+      Animated.timing(popupAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+  /* ------------------------------------ */
+
   useEffect(() => {
     if (user) {
       setDraftName(user.name || "");
@@ -46,16 +71,17 @@ export default function Settings() {
 
       setUser(res.data.user || res.data);
 
-      Alert.alert("Success", "Profile updated successfully");
+      showPopup("Profile updated successfully", "#16a34a");
     } catch (err: any) {
       console.log("UPDATE ERROR:", err?.response?.data || err);
-      Alert.alert("Error", "Profile update failed");
+      showPopup("Profile update failed", "#dc2626");
     }
   };
 
   const handleCancel = () => {
     setDraftName(user?.name || "");
     setDraftCurrency(user?.currency || "USD");
+    showPopup("Changes cancelled", "#f59e0b");
   };
 
   const handleLogout = async () => {
@@ -68,6 +94,28 @@ export default function Settings() {
   return (
     <>
       <StatusBar barStyle="dark-content" />
+
+      {/* POPUP MESSAGE */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.popup,
+          {
+            backgroundColor: popupColor,
+            opacity: popupAnim,
+            transform: [
+              {
+                scale: popupAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.8, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Text style={styles.popupText}>{popupMsg}</Text>
+      </Animated.View>
 
       {/* TOP SAFE SPACE */}
       <View style={{ height: insets.top }} />
@@ -160,6 +208,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F5F6FA",
     padding: 16,
+  },
+
+  popup: {
+    position: "absolute",
+    top: 60,
+    alignSelf: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    zIndex: 9999,
+    elevation: 50,
+  },
+
+  popupText: {
+    color: "#fff",
+    fontWeight: "700",
   },
 
   card: {

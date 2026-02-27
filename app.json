@@ -4,21 +4,17 @@
     "slug": "ExpensesTracker",
     "version": "1.0.0",
     "orientation": "portrait",
-
     "icon": "./assets/images/logo.png",
     "scheme": "expensestracker",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-
     "ios": {
       "supportsTablet": true
     },
-
     "android": {
       "package": "com.avlesidnap.expensestracker",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/logo.png",
@@ -26,12 +22,10 @@
         "monochromeImage": "./assets/images/logo.png"
       }
     },
-
     "web": {
       "output": "static",
       "favicon": "./assets/images/logo.png"
     },
-
     "plugins": [
       "expo-router",
       "expo-web-browser",
@@ -44,14 +38,13 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
-
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": true
     },
-
     "extra": {
       "router": {},
       "eas": {

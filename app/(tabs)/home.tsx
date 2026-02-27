@@ -180,7 +180,7 @@ export default function Home() {
           />
         </View>
 
-        <FloatingAddButton onAdded={loadData} />
+        <FloatingAddButton pageType="home" defaultType="income" onAdded={loadData} />
       </View>
     </ScreenContainer>
   );

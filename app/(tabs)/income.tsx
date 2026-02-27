@@ -156,7 +156,7 @@ export default function Income() {
                     />
                 </View>
 
-                <FloatingAddButton onAdded={loadData} />
+                <FloatingAddButton pageType="income" defaultType="income" onAdded={loadData} />
             </View>
         </ScreenContainer>
     );

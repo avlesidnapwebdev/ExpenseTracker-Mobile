@@ -162,7 +162,7 @@ export default function Expenses() {
           />
         </View>
 
-        <FloatingAddButton onAdded={loadData} />
+        <FloatingAddButton pageType="expense" defaultType="expense" onAdded={loadData} />
       </View>
     </ScreenContainer>
   );
